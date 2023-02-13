@@ -92,7 +92,8 @@ app.get("/districts/:districtId/", async (request, response) => {
     WHERE district_id=${districtId}`;
   const district = await db.get(getDistrictQuery);
 
-  let camelCasePlayer = {
+  let camelCaseDistrict = {
+    districtId: district.district_id,
     districtName: district.district_name,
     stateId: district.state_id,
     cases: district.cases,
@@ -100,6 +101,71 @@ app.get("/districts/:districtId/", async (request, response) => {
     active: district.active,
     deaths: district.deaths,
   };
-  response.send(camelCasePlayer);
+  response.send(camelCaseDistrict);
+});
+
+//Delete district from district table based on district ID//
+app.delete("/districts/:districtId/", async (request, response) => {
+  const { districtId } = request.params;
+  const getDistrictQuery = `
+    DELETE FROM district
+    WHERE district_id=${districtId}`;
+  const district = await db.run(getDistrictQuery);
+  response.send("District Removed");
+});
+
+app.put("/districts/:districtId/", async (request, response) => {
+  const { districtId } = request.params;
+  const updateDistrictDetail = request.body;
+  console.log(updateDistrictDetail);
+  const {
+    districtName,
+    stateId,
+    cases,
+    cured,
+    active,
+    deaths,
+  } = updateDistrictDetail;
+
+  const updateDistrictDetailQuery = `
+   UPDATE district
+   SET district_name='${districtName}', 
+    state_id=${stateId}, 
+    cases=${cases}, 
+    cured=${cured}, 
+    active=${active}, 
+    deaths=${deaths}
+   WHERE district_id=${districtId}`;
+
+  const updatedDistrictDetail = await db.run(updateDistrictDetailQuery);
+  response.send("District Details Updated");
+});
+
+//Return statistics of total cases, cured, active, deaths of a specific state based on state ID//
+app.get("/states/:stateId/stats/", async (request, response) => {
+  const { stateId } = request.params;
+  const totalStatisticsQuery = `
+    SELECT 
+        SUM(cases) as totalCases, 
+        SUM(cured) as totalCured, 
+        SUM(active) as totalActive, 
+        SUM(deaths) as totalDeaths
+    FROM district
+    WHERE state_id=${stateId}`;
+  const totalStatistics = await db.get(totalStatisticsQuery);
+  console.log(totalStatistics);
+  response.send(totalStatistics);
+});
+
+//Return an object containing state name of a district based on district ID//
+app.get("/districts/:districtId/details/", async (request, response) => {
+  const { districtId } = request.params;
+  const stateNameQuery = `
+    SELECT state_name as stateName
+    FROM district NATURAL JOIN state
+    WHERE district_id=${districtId}`;
+  const stateName = await db.get(stateNameQuery);
+  console.log(stateName);
+  response.send(stateName);
 });
 module.exports = app;
