@@ -83,4 +83,23 @@ app.post("/districts/", async (request, response) => {
   const districtId = addedDistrictDetail.lastId;
   response.send("District Successfully Added");
 });
+
+//Returns a district based on the district ID//
+app.get("/districts/:districtId/", async (request, response) => {
+  const { districtId } = request.params;
+  const getDistrictQuery = `
+    SELECT * FROM district
+    WHERE district_id=${districtId}`;
+  const district = await db.get(getDistrictQuery);
+
+  let camelCasePlayer = {
+    districtName: district.district_name,
+    stateId: district.state_id,
+    cases: district.cases,
+    cured: district.cured,
+    active: district.active,
+    deaths: district.deaths,
+  };
+  response.send(camelCasePlayer);
+});
 module.exports = app;
